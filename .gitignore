@@ -1,0 +1,7 @@
+# phpstorm and vscode project files
+.idea
+.vscode
+
+node_modules
+dist
+.DS_Store
