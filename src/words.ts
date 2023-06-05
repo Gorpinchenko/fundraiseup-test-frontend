@@ -1,4 +1,4 @@
-[
+export const words = [
   "apple",
   "function",
   "timeout",
@@ -9,5 +9,5 @@
   "sun",
   "symbol",
   "button",
-  "software"
-]
+  "software",
+];

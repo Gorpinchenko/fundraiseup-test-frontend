@@ -30,18 +30,25 @@
             id="answer"
             class="bg-light mx-1 mb-3"
             style="height: 46px; border-radius: 6px"
-          >
-            <button type="button" class="btn btn-primary">Primary</button>
-            <button type="button" class="btn btn-success">Success</button>
-            <button type="button" class="btn btn-success">Success</button>
-            <button type="button" class="btn btn-success">Success</button>
-            <button type="button" class="btn btn-success">Success</button>
-            <button type="button" class="btn btn-danger">Danger</button>
-          </div>
-          <div id="letters">
-            <button type="button" class="btn btn-primary">Primary</button>
-            <button type="button" class="btn btn-success">Success</button>
-            <button type="button" class="btn btn-danger">Danger</button>
+          ></div>
+          <div id="letters"></div>
+          <div id="stat">
+            <table class="table">
+              <tbody>
+                <tr>
+                  <td>Число собранных слов без ошибок</td>
+                  <td id="rightWordsNumber"></td>
+                </tr>
+                <tr>
+                  <td>Число ошибок</td>
+                  <td id="errorsNumber"></td>
+                </tr>
+                <tr>
+                  <td>Слово с самым большим числом ошибок</td>
+                  <td id="mostErrorsWord"></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
