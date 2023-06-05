@@ -15,7 +15,7 @@ interface GameView {
 }
 
 interface GameStat {
-  readonly rightWordsNumber: number;
+  readonly correctWordsNumber: number;
   readonly errorsNumber: number;
   readonly mostErrorsWord: string;
 }

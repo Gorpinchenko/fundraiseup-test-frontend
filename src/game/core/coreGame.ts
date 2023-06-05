@@ -18,7 +18,7 @@ export function createGame(
   let currentQuestionIndex = 0;
   let currentLetterIndex = 0;
   let currentWord = wordsStat[currentQuestionIndex];
-  let rightWordsNumber = 0;
+  let correctWordsNumber = 0;
   let errorsNumber = 0;
   let isEndGame = false;
   let isEndWord = false;
@@ -62,7 +62,7 @@ export function createGame(
         if (isNextLetterExists) {
           currentLetterIndex++;
         } else {
-          rightWordsNumber++;
+          correctWordsNumber++;
           isEndWord = true;
           if (!isNextWordExists) {
             isEndGame = true;
@@ -76,6 +76,7 @@ export function createGame(
       currentWord.errorsNumber++;
 
       if (currentWord.errorsNumber === maxErrorsNumber) {
+        isEndWord = true;
         if (!isNextWordExists) {
           isEndGame = true;
         }
@@ -103,7 +104,7 @@ export function createGame(
       }
 
       return {
-        rightWordsNumber,
+        correctWordsNumber,
         errorsNumber,
         mostErrorsWord,
       };

@@ -6,7 +6,7 @@ enum Elements {
   Answer = "#answer",
   Letters = "#letters",
   Stat = "#stat",
-  RightWordsNumber = "#rightWordsNumber",
+  CorrectWordsNumber = "#correctWordsNumber",
   ErrorsNumber = "#errorsNumber",
   MostErrorsWord = "#mostErrorsWord",
 }
@@ -18,7 +18,7 @@ enum ButtonClasses {
 }
 
 const buttonChangeColorDelay = 200;
-const wordFailDelay = 1000;
+const nextWordDelay = 1000;
 
 export function createView(game: GameCore): GameView {
   let questionNumber: null | HTMLElement = null;
@@ -26,9 +26,13 @@ export function createView(game: GameCore): GameView {
   let answerContainer: null | HTMLElement = null;
   let lettersContainer: null | HTMLElement = null;
   let statContainer: null | HTMLElement = null;
-  let rightWordsNumber: null | HTMLElement = null;
+  let correctWordsNumber: null | HTMLElement = null;
   let errorsNumber: null | HTMLElement = null;
   let mostErrorsWord: null | HTMLElement = null;
+
+  function sleep(delay: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, delay));
+  }
 
   function createButton(letter: string, className: string): HTMLButtonElement {
     const btn = document.createElement("button");
@@ -36,7 +40,7 @@ export function createView(game: GameCore): GameView {
     btn.className = `btn ${className} mr-1`;
     btn.type = "button";
     btn.dataset.letter = letter;
-    btn.innerHTML = letter;
+    btn.textContent = letter;
     return btn;
   }
 
@@ -54,21 +58,17 @@ export function createView(game: GameCore): GameView {
 
   function onKeypress(event: KeyboardEvent): void {
     const letter = event.key;
-    let btn: HTMLButtonElement | null = null;
-
-    try {
-      btn = document.querySelector<HTMLButtonElement>(
-        `${Elements.Letters}>button[data-letter=${letter}]`
-      );
-    } catch (error) {}
+    let btn = document.querySelector<HTMLButtonElement>(
+      `${Elements.Letters}>button[data-letter="${letter}"]`
+    );
 
     checkCurrentLetter(letter, btn);
   }
 
   function showNewShuffledWord(): void {
     const shuffledWord = game.getCurrentShuffledWord();
-    lettersContainer!.innerHTML = "";
-    answerContainer!.innerHTML = "";
+    lettersContainer!.textContent = "";
+    answerContainer!.textContent = "";
     statContainer!.style.display = "none";
 
     const documentFragment = document.createDocumentFragment();
@@ -85,18 +85,15 @@ export function createView(game: GameCore): GameView {
     game.setNextWord();
     showNewShuffledWord();
 
-    questionNumber!.innerHTML = game.getCurrentQuestionNumber().toString();
+    questionNumber!.textContent = game.getCurrentQuestionNumber().toString();
   }
 
-  async function addLetterToAnswer(btn: HTMLButtonElement): Promise<void> {
-    return new Promise((resolve) => {
-      answerContainer!.appendChild(btn);
-      setTimeout(() => {
-        btn.classList.remove(ButtonClasses.Primary);
-        btn.classList.add(ButtonClasses.Success);
-        resolve();
-      }, buttonChangeColorDelay);
-    });
+  function addLetterToAnswer(btn: HTMLButtonElement): void {
+    answerContainer!.appendChild(btn);
+    setTimeout(() => {
+      btn.classList.remove(ButtonClasses.Primary);
+      btn.classList.add(ButtonClasses.Success);
+    }, buttonChangeColorDelay);
   }
 
   function showError(btn: HTMLButtonElement): void {
@@ -108,9 +105,9 @@ export function createView(game: GameCore): GameView {
     }, buttonChangeColorDelay);
   }
 
-  function showCorrectWord(word: string): Promise<void> {
-    lettersContainer!.innerHTML = "";
-    answerContainer!.innerHTML = "";
+  function showCorrectWord(word: string): void {
+    lettersContainer!.textContent = "";
+    answerContainer!.textContent = "";
 
     const documentFragment = document.createDocumentFragment();
 
@@ -120,37 +117,40 @@ export function createView(game: GameCore): GameView {
     });
 
     answerContainer!.appendChild(documentFragment);
-
-    return new Promise((resolve) => setTimeout(resolve, wordFailDelay));
   }
 
   async function checkCurrentLetter(
     letter: string,
     btn: HTMLButtonElement | null
   ): Promise<void> {
+    if (game.isEndWord()) {
+      return;
+    }
+
     try {
-      if (btn) {
-        if (game.checkCurrentLetter(letter)) {
-          btn.removeEventListener("click", onLetterClick);
-          await addLetterToAnswer(btn);
-        } else {
-          showError(btn);
-        }
+      const isCorrectLetter = game.checkCurrentLetter(letter);
+
+      if (!btn) {
+        return;
       }
 
-      if (game.isEndWord()) {
-        setNextWord();
-      } else if (game.isEndGame()) {
-        showStat();
+      if (isCorrectLetter) {
+        btn.removeEventListener("click", onLetterClick);
+        addLetterToAnswer(btn);
+      } else {
+        showError(btn);
       }
     } catch (error) {
       if (error instanceof WordFailedError) {
-        await showCorrectWord(error.message);
-        if (game.isEndGame()) {
-          showStat();
-        } else {
-          setNextWord();
-        }
+        showCorrectWord(error.message);
+        await sleep(nextWordDelay);
+      }
+    } finally {
+      if (game.isEndGame()) {
+        showStat();
+      } else if (game.isEndWord()) {
+        await sleep(nextWordDelay);
+        setNextWord();
       }
     }
   }
@@ -158,9 +158,9 @@ export function createView(game: GameCore): GameView {
   function showStat(): void {
     const stat = game.getStat();
 
-    rightWordsNumber!.innerHTML = stat.rightWordsNumber.toString();
-    errorsNumber!.innerHTML = stat.errorsNumber.toString();
-    mostErrorsWord!.innerHTML = stat.mostErrorsWord;
+    correctWordsNumber!.textContent = stat.correctWordsNumber.toString();
+    errorsNumber!.textContent = stat.errorsNumber.toString();
+    mostErrorsWord!.textContent = `"${stat.mostErrorsWord}"`;
     answerContainer!.style.display = "none";
     lettersContainer!.style.display = "none";
     statContainer!.style.display = "block";
@@ -175,7 +175,7 @@ export function createView(game: GameCore): GameView {
       lettersContainer = document.querySelector(Elements.Letters);
       answerContainer = document.querySelector(Elements.Answer);
       statContainer = document.querySelector(Elements.Stat);
-      rightWordsNumber = document.querySelector(Elements.RightWordsNumber);
+      correctWordsNumber = document.querySelector(Elements.CorrectWordsNumber);
       errorsNumber = document.querySelector(Elements.ErrorsNumber);
       mostErrorsWord = document.querySelector(Elements.MostErrorsWord);
 
@@ -185,14 +185,14 @@ export function createView(game: GameCore): GameView {
         !lettersContainer ||
         !answerContainer ||
         !statContainer ||
-        !rightWordsNumber ||
+        !correctWordsNumber ||
         !errorsNumber ||
         !mostErrorsWord
       ) {
         throw new Error("Нет разметки для показа игры");
       }
 
-      totalQuestionsNumber.innerHTML = game
+      totalQuestionsNumber.textContent = game
         .getTotalQuestionsNumber()
         .toString();
 
